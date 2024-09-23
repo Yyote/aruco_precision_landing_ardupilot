@@ -23,6 +23,7 @@ setup(
             f'aruco_prec_land = {package_name}.node:main',
             f'aruco_coordinates_pub = {package_name}.coordinates_publisher:main',
             f'aruco_infred_landing_node = {package_name}.aruco_infred_landing_node:main',
+            f'color_code_landing_node = {package_name}.color_code_landing_node:main',
         ],
     },
 )

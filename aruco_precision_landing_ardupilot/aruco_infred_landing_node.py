@@ -21,7 +21,7 @@ class LandingPublisher(Node):
     def __init__(self, username=None):
         
         super().__init__('landing_publisher')
-        self.coordinates_pub = self.create_publisher(Vector3, '/camera/landing_position', 10)
+        self.coordinates_pub = self.create_publisher(Vector3, 'camera/landing_position', 10)
         self.detection_pub = self.create_publisher(Image, "camera/detected_markers", 10)
         self.bridge = CvBridge()
         
@@ -45,7 +45,7 @@ class LandingPublisher(Node):
             self.timer = self.create_timer(timer_period, self.timer_callback)
             self.light_timer = self.create_timer(10, self.light_timer)
         else:
-            self.cam_sub = self.create_subscription(Image, '/camera', self.aruco_callback, 10)
+            self.cam_sub = self.create_subscription(Image, 'camera_down', self.aruco_callback, 10)
 
 
 
@@ -125,28 +125,43 @@ class LandingPublisher(Node):
 
                 msg = Vector3()
                 
-                x = ( angle_by_pixel_x * float(cX - frame_cx) )
+                cv2.circle(image_detected, (frame_cx, frame_cy), 2, (0, 255, 0), 2)
+                cv2.line(image_detected, (cX, frame_cy), (frame_cx, frame_cy), (255, 0, 0), 2)
+                cv2.line(image_detected, (frame_cx, cY), (frame_cx, frame_cy), (255, 0, 0), 2)
+
+                # x_from_c = float(cX - frame_cx)
+                # y_from_c = - float(cY - frame_cy)
+
+                x_from_c = - float(cY - frame_cy)
+                y_from_c = - float(cX - frame_cx)
+
+                cv2.putText(image_detected, f"x: {x_from_c}\ny: {y_from_c}", (100, 100), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 1)
+                
+                msg.x = (angle_by_pixel_x * x_from_c)
+                msg.y = (angle_by_pixel_y * y_from_c) 
+                
+                # x = ( angle_by_pixel_x * float(cX - frame_cx) )
                     
-                if x > 0.022: 
-                    msg.x = 0.022
+                # if x > 0.022: 
+                #     msg.x = 0.022
                 
-                elif x < -0.022:
-                    msg.x = -0.022
+                # elif x < -0.022:
+                #     msg.x = -0.022
 
-                else:
-                    msg.x = x
+                # else:
+                #     msg.x = x
 
 
-                y = ( angle_by_pixel_y * float(cY - frame_cy) ) 
+                # y = ( angle_by_pixel_y * float(cY - frame_cy) ) 
 
-                if y > 0.022: 
-                    msg.y = 0.022
+                # if y > 0.022: 
+                #     msg.y = 0.022
                 
-                elif y < -0.022:
-                    msg.y = -0.022
+                # elif y < -0.022:
+                #     msg.y = -0.022
 
-                else:
-                    msg.y = y
+                # else:
+                #     msg.y = y
 
                 self.coordinates_pub.publish(msg)
 
@@ -258,32 +273,47 @@ class LandingPublisher(Node):
                     cv2.circle(image_detected, (cX, cY), 3, (0, 0, 255), 3)
 
 
-                    msg = Vector3()
+                msg = Vector3()
+                
+                cv2.circle(image_detected, (frame_cx, frame_cy), 2, (0, 255, 0), 2)
+                cv2.line(image_detected, (cX, frame_cy), (frame_cx, frame_cy), (255, 0, 0), 2)
+                cv2.line(image_detected, (frame_cx, cY), (frame_cx, frame_cy), (255, 0, 0), 2)
 
-                    x = ( angle_by_pixel_x * float(cX - frame_cx) )
+                # x_from_c = float(cX - frame_cx)
+                # y_from_c = - float(cY - frame_cy)
+
+                x_from_c = - float(cY - frame_cy)
+                y_from_c = - float(cX - frame_cx)
+
+                cv2.putText(image_detected, f"x: {x_from_c}\ny: {y_from_c}", (100, 100), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 1)
+                
+                msg.x = (angle_by_pixel_x * x_from_c)
+                msg.y = (angle_by_pixel_y * y_from_c) 
+                
+                # x = ( angle_by_pixel_x * float(cX - frame_cx) )
                     
-                    if x > 0.022: 
-                        msg.x = 0.022
-                    
-                    elif x < -0.022:
-                        msg.x = -0.022
+                # if x > 0.022: 
+                #     msg.x = 0.022
+                
+                # elif x < -0.022:
+                #     msg.x = -0.022
 
-                    else:
-                        msg.x = x
+                # else:
+                #     msg.x = x
 
 
-                    y = ( angle_by_pixel_y * float(cY - frame_cy) ) 
+                # y = ( angle_by_pixel_y * float(cY - frame_cy) ) 
 
-                    if y > 0.022: 
-                        msg.y = 0.022
-                    
-                    elif y < -0.022:
-                        msg.y = -0.022
+                # if y > 0.022: 
+                #     msg.y = 0.022
+                
+                # elif y < -0.022:
+                #     msg.y = -0.022
 
-                    else:
-                        msg.y = y
+                # else:
+                #     msg.y = y
 
-                    self.coordinates_pub.publish(msg)
+                self.coordinates_pub.publish(msg)
             else:    
                 if self.light_is_bright ==0:
                     kernel = np.ones((5, 5), np.uint8)
@@ -317,37 +347,26 @@ class LandingPublisher(Node):
                         cv2.drawContours(image_detected, [i], 0, (0,255,0), 3)
                         M = cv2.moments(i)
                         if M['m00'] != 0:
-                                    cX = int(M['m10']/M['m00'])
-                                    cY = int(M['m01']/M['m00'])
-                                    cv2.drawContours(image, [i], -1, (0, 255, 0), 2)
-                                    # cv2.circle(image, (cX, cY), 7, (0, 0, 255), -1)
-                                    msg = Vector3()
-                                    x = ( angle_by_pixel_x * float(cX - frame_cx) )
-                    
-                                    if x > 0.022: 
-                                        msg.x = 0.022
-                                    
-                                    elif x < -0.022:
-                                        msg.x = -0.022
+                            cX = int(M['m10']/M['m00'])
+                            cY = int(M['m01']/M['m00'])
+                            cv2.drawContours(image, [i], -1, (0, 255, 0), 2)
+                            # cv2.circle(image, (cX, cY), 7, (0, 0, 255), -1)
+                            msg = Vector3()
+                            
+                            cv2.circle(image_detected, (frame_cx, frame_cy), 2, (0, 255, 0), 2)
+                            cv2.line(image_detected, (cX, frame_cy), (frame_cx, frame_cy), (255, 0, 0), 2)
+                            cv2.line(image_detected, (frame_cx, cY), (frame_cx, frame_cy), (255, 0, 0), 2)
 
-                                    else:
-                                        msg.x = x
+                            x_from_c = - float(cY - frame_cy)
+                            y_from_c = - float(cX - frame_cx)
 
+                            cv2.putText(image_detected, f"x: {x_from_c}\ny: {y_from_c}", (100, 100), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 1)
+                            
+                            msg.x = (angle_by_pixel_x * x_from_c)
+                            msg.y = (angle_by_pixel_y * y_from_c) 
+                            
+                            self.coordinates_pub.publish(msg)
 
-                                    y = ( angle_by_pixel_y * float(cY - frame_cy) ) 
-
-                                    if y > 0.022: 
-                                        msg.y = 0.022
-                                    
-                                    elif y < -0.022:
-                                        msg.y = -0.022
-
-                                    else:
-                                        msg.y = y
-                                    cv2.circle(image_detected, (cX, cY), 3, (0, 0, 255), 3)
-                                    self.coordinates_pub.publish(msg)
-
-            image_detected = cv2.putText(image_detected, self.str_average, (50,50), cv2.FONT_HERSHEY_SIMPLEX , 1, (0,0,255), 3, cv2.LINE_AA) 
             imgmsg = self.bridge.cv2_to_imgmsg(image_detected)
             self.detection_pub.publish(imgmsg)
 
